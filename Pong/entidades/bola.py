@@ -10,6 +10,7 @@ class Bola:
     """
 
     def __init__(self, verdadeira=True):
+
         # Define se a bola é a verdadeira (capaz de marcar ponto)
         self.verdadeira = verdadeira
 
@@ -48,8 +49,13 @@ class Bola:
         """
         Atualiza posição da bola e trata colisão com
         as paredes superior e inferior.
+
+        Retorna True se houve colisão com a parede.
         """
 
+        colidiu_parede = False
+
+        # atualiza posição da bola
         self.x += self.vx
         self.y += self.vy
 
@@ -61,6 +67,11 @@ class Bola:
 
             # adiciona pequena variação aleatória
             self.vy += random.randint(-3, 3)
+
+            # informa que houve colisão
+            colidiu_parede = True
+
+        return colidiu_parede
 
     def colidir(self, r1, r2):
         """
@@ -74,10 +85,10 @@ class Bola:
             # inverte direção horizontal
             self.vx *= -1
 
-            # rebote variável
+            # rebote variável (task do rebote aleatório)
             self.vy += random.randint(-4, 4)
 
-            # limita velocidade para não quebrar o jogo
+            # limita velocidade para evitar bugs
             self.vy = max(-10, min(10, self.vy))
 
             return True
