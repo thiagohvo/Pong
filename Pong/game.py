@@ -7,12 +7,23 @@ from config import PRETO, BRANCO, LARGURA, ALTURA, FPS
 
 
 class Game:
+    """
+    Classe principal do jogo.
+    Responsável por controlar lógica, física e renderização.
+    """
+
     def __init__(self, tela):
+
         self.tela = tela
         self.clock = pygame.time.Clock()
 
-        # Cria objetos do jogo
-        self.bola = Bola()
+        # Lista de bolas do jogo (inicia com apenas a bola verdadeira)
+        self.bolas = [Bola(True)]
+
+        # Controle de tempo para ativar o power-up
+        self.ultimo_powerup = pygame.time.get_ticks()
+
+        # Cria raquetes dos jogadores
         self.player1 = Raquete(15, ALTURA // 2)
         self.player2 = Raquete(LARGURA - 25, ALTURA // 2)
 
@@ -22,6 +33,7 @@ class Game:
 
     def processar_input(self):
         """Captura input do jogador"""
+
         keys = pygame.key.get_pressed()
 
         if keys[pygame.K_UP]:
@@ -33,29 +45,59 @@ class Game:
     def atualizar(self):
         """Atualiza estado do jogo"""
 
-        self.bola.mover()
-        self.bola.colidir(self.player1, self.player2)
+        for bola in self.bolas:
 
-        # IA do player 2
-        self.player2.seguir_bola(self.bola.y)
+            # move bola
+            bola.mover()
 
-        # Verifica pontuação
-        ponto = self.bola.ponto()
+            # verifica colisão com raquetes
+            colidiu = bola.colidir(self.player1, self.player2)
 
-        if ponto:
-            if ponto == "player1":
-                self.score1 += 1
-            else:
-                self.score2 += 1
+            # IA segue apenas a bola verdadeira
+            if bola.verdadeira:
+                self.player2.seguir_bola(bola.y)
 
-            self.bola.reset()
+            # verifica tempo atual
+            agora = pygame.time.get_ticks()
+
+            # power-up: a cada 5 segundos + colisão
+            if colidiu and agora - self.ultimo_powerup > 5000:
+
+                self.ultimo_powerup = agora
+
+                # cria 4 bolas falsas
+                for _ in range(4):
+
+                    nova = Bola(False)
+
+                    # nasce na posição da bola que colidiu
+                    nova.x = bola.x
+                    nova.y = bola.y
+
+                    self.bolas.append(nova)
+
+            # verifica pontuação
+            ponto = bola.ponto()
+
+            if ponto:
+
+                if ponto == "player1":
+                    self.score1 += 1
+                else:
+                    self.score2 += 1
+
+                # reinicia jogo com apenas a bola verdadeira
+                self.bolas = [Bola(True)]
 
     def desenhar(self):
         """Renderiza elementos na tela"""
 
         self.tela.fill(PRETO)
 
-        self.bola.desenhar(self.tela)
+        # desenha todas as bolas
+        for bola in self.bolas:
+            bola.desenhar(self.tela)
+
         self.player1.desenhar(self.tela)
         self.player2.desenhar(self.tela)
 
@@ -71,6 +113,7 @@ class Game:
         """Loop principal do jogo"""
 
         while True:
+
             for evento in pygame.event.get():
                 if evento.type == pygame.QUIT:
                     return
